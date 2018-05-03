@@ -1,0 +1,152 @@
+-* ===========================================================================================================================
+-* 														User Group
+-* ---------------------------------------------------------------------------------------------------------------------------
+
+-* 		Date: 04/02/2018		Created By: 	Shravan Panuganti
+
+-* ===========================================================================================================================
+-* 														Default Parameter Values
+-* ---------------------------------------------------------------------------------------------------------------------------
+
+-SET &ECHO = ALL;
+
+-* ===========================================================================================================================
+-* 														Variables
+-* ---------------------------------------------------------------------------------------------------------------------------
+
+-SET &UserId = &FOCSECUSER;
+
+-SET &Slash_Position = POSIT('&UserId.EVAL', &UserId.LENGTH, '\\', 1, 'I5');
+-SET &UserIdLength = &UserId.LENGTH - &Slash_Position;
+-SET &UserId = SUBSTR(&UserId.LENGTH, &UserId, &Slash_Position + 1, &UserId.LENGTH, &UserId.LENGTH - &Slash_Position, 'A&UserIdLength');
+-SET &UserId  = LOCASE(&UserId.LENGTH, &UserId, 'A&UserId.LENGTH');
+
+-SET &MyContentFolder = '~' || TRUNCATE('&UserId.EVAL');
+
+-* ===========================================================================================================================
+-* 														Check user Group
+-* ---------------------------------------------------------------------------------------------------------------------------
+
+JOIN
+INNER ID IN UOA_GROUPS TO GROUPID IN UOA_GROUPSUSERS TAG GU_T AS GU_J
+END
+JOIN
+INNER GU_T.USERID IN UOA_GROUPS TO ID IN UOA_USERS TAG U_T AS U_J
+END
+
+TABLE FILE UOA_GROUPS
+PRINT
+	NAME
+	COMPUTE ROWNUMBER/I11 = LAST ROWNUMBER + 1;
+	U_T.NAME
+	U_T.DESCRIPTION
+WHERE U_T.NAME EQ '&UserId.EVAL';
+-*WHERE U_T.NAME EQ 'e062316'; -*Tiffany Administrator
+-*WHERE U_T.NAME EQ 'e060802'; -*Kurt Super User
+-*WHERE U_T.NAME EQ 'e046422'; -*Nicole Power User
+-*WHERE U_T.NAME EQ 'e052769'; -*Randy Stos PSA User
+-*WHERE U_T.NAME EQ 'e051642'; -*Layton Coombs Super User and PSA User
+ON TABLE HOLD AS UserGroups
+END
+-RUN
+
+-SET &NumberOfGroups = &LINES;
+
+-SET &RowNumber = 1;
+-SET &GroupString = '';
+
+-REPEAT GroupLoop &NumberOfGroups TIMES
+
+TABLE FILE UserGroups
+PRINT
+NAME
+WHERE ROWNUMBER EQ &RowNumber;
+ON TABLE SAVE AS UserGroupString
+END
+-RUN
+
+-READ UserGroupString &Group.A25.
+
+-SET &GroupString = IF &RowNumber GT 1 THEN '&GroupString.EVAL' | '&Group.EVAL' ELSE '&Group.EVAL';
+-SET &RowNumber = &RowNumber + 1;
+-GroupLoop
+
+-SET &Administrator = IF POSIT('&GroupString.EVAL', &GroupString.LENGTH, 'Administrators', 14, 'I5') GT 0 THEN 'True' ELSE 'False';
+-SET &Super_User = IF POSIT('&GroupString.EVAL', &GroupString.LENGTH, 'Super_User', 10, 'I5') GT 0 THEN 'True' ELSE 'False';
+-SET &Power_User = IF POSIT('&GroupString.EVAL', &GroupString.LENGTH, 'Power_User', 10, 'I5') GT 0 THEN 'True' ELSE 'False';
+-SET &PSA_User = IF POSIT('&GroupString.EVAL', &GroupString.LENGTH, 'PSA_User', 3, 'I5') GT 0 THEN 'True' ELSE 'False';
+
+TABLE FILE CAR
+SUM
+COMPUTE USER_ACCESS/A50V = 'Dummy';
+COMPUTE USER_ACCESS_DESCRIPTION/A100V = 'Dummy - to be removed';
+COMPUTE USER_ACCESS_CODE/I1 = 0;
+COUNTRY NOPRINT
+ON TABLE HOLD AS User_Access_Dummy
+END
+-RUN
+
+TABLE FILE CAR
+SUM
+COMPUTE USER_ACCESS/A50V = 'Sales';
+COMPUTE USER_ACCESS_DESCRIPTION/A100V = 'Sales';
+COMPUTE USER_ACCESS_CODE/I1 = 1;
+COUNTRY NOPRINT
+ON TABLE HOLD AS User_Access_Sales
+END
+
+TABLE FILE CAR
+SUM
+COMPUTE USER_ACCESS/A50V = 'PSA';
+COMPUTE USER_ACCESS_DESCRIPTION/A100V = 'PSA';
+COMPUTE USER_ACCESS_CODE/I1 = 2;
+COUNTRY NOPRINT
+ON TABLE HOLD AS User_Access_PSA
+END
+
+TABLE FILE CAR
+SUM
+COMPUTE USER_ACCESS/A50V = 'MyReports';
+COMPUTE USER_ACCESS_DESCRIPTION/A100V = 'My Reports';
+COMPUTE USER_ACCESS_CODE/I1 = 3;
+COUNTRY NOPRINT
+ON TABLE HOLD AS User_Access_MyReports
+END
+
+TABLE FILE User_Access_Dummy
+ PRINT
+ USER_ACCESS
+ USER_ACCESS_CODE
+ USER_ACCESS_DESCRIPTION
+ON TABLE HOLD AS User_Access
+
+-IF '&Administrator.EVAL' EQ 'False' AND '&Super_User.EVAL' EQ 'False' AND '&Power_User.EVAL' EQ 'False' THEN GOTO :PSA ELSE GOTO :Sales;
+
+-:Sales
+
+MORE
+FILE User_Access_Sales
+
+-:PSA
+-IF '&Administrator.EVAL' EQ 'False' AND '&PSA_User.EVAL' EQ 'False' THEN GOTO :MyReports
+
+MORE
+FILE User_Access_PSA
+
+-:MyReports
+-IF '&PSA_User.EVAL' EQ 'True' AND '&Administrator.EVAL' EQ 'False' AND '&Super_User.EVAL' EQ 'False' AND '&Power_User.EVAL' EQ 'False' THEN GOTO :EndOfFile;
+
+MORE
+FILE User_Access_MyReports
+
+-:EndOfFile
+END
+
+TABLE FILE User_Access
+PRINT
+	USER_ACCESS
+	USER_ACCESS_DESCRIPTION
+	BY USER_ACCESS_CODE NOPRINT
+WHERE USER_ACCESS_CODE NE 0;
+ON TABLE PCHOLD FORMAT XML
+END

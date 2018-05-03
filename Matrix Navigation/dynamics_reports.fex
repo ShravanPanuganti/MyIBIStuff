@@ -1,0 +1,367 @@
+-* ===========================================================================================================================
+-* 														Dynamics Reports
+-* ---------------------------------------------------------------------------------------------------------------------------
+
+-* 		Date: 03/26/2018		Created By: 	Shravan Panuganti
+
+-* ===========================================================================================================================
+-* 														Default Parameter Values
+-* ---------------------------------------------------------------------------------------------------------------------------
+
+-SET &ECHO = ALL;
+
+-* ===========================================================================================================================
+-* 														Variables
+-* ---------------------------------------------------------------------------------------------------------------------------
+
+-SET &UserId = &FOCSECUSER;
+
+-SET &Slash_Position = POSIT('&UserId.EVAL', &UserId.LENGTH, '\\', 1, 'I5');
+-SET &UserIdLength = &UserId.LENGTH - &Slash_Position;
+-SET &UserId = SUBSTR(&UserId.LENGTH, &UserId, &Slash_Position + 1, &UserId.LENGTH, &UserId.LENGTH - &Slash_Position, 'A&UserIdLength');
+-SET &UserId  = LOCASE(&UserId.LENGTH, &UserId, 'A&UserId.LENGTH');
+-SET &UserId  = TRUNCATE('&UserId.EVAL');
+
+-SET &MyContentFolder = '~' || TRUNCATE('&UserId.EVAL');
+
+-* ===========================================================================================================================
+-* 														Check user Group
+-* ---------------------------------------------------------------------------------------------------------------------------
+
+JOIN
+INNER ID IN UOA_GROUPS TO GROUPID IN UOA_GROUPSUSERS TAG GU_T AS GU_J
+END
+JOIN
+INNER GU_T.USERID IN UOA_GROUPS TO ID IN UOA_USERS TAG U_T AS U_J
+END
+
+TABLE FILE UOA_GROUPS
+PRINT
+	NAME
+	COMPUTE ROWNUMBER/I11 = LAST ROWNUMBER + 1;
+	U_T.NAME
+	U_T.DESCRIPTION
+WHERE U_T.NAME EQ '&UserId.EVAL';
+-*WHERE U_T.NAME EQ 'e062316'; -*Tiffany Administrator
+-*WHERE U_T.NAME EQ 'e060802'; -*Kurt Super User
+-*WHERE U_T.NAME EQ 'e046422'; -*Nicole Power User
+-*WHERE U_T.NAME EQ 'e052769'; -*Randy Stos PSA User
+-*WHERE U_T.NAME EQ 'e051642'; -*Layton Coombs Super User and PSA User
+ON TABLE HOLD AS UserGroups
+END
+-RUN
+
+-* ---------------------------------------------------------------------------------------
+-* Loop through all the groups of which the user is a member and create a string of groups
+-* ---------------------------------------------------------------------------------------
+
+-SET &NumberOfGroups = &LINES;
+-SET &RowNumber = 1;
+-SET &GroupString = '';
+
+-REPEAT GroupLoop &NumberOfGroups TIMES
+
+TABLE FILE UserGroups
+PRINT
+NAME
+WHERE ROWNUMBER EQ &RowNumber;
+ON TABLE SAVE AS UserGroupString
+END
+-RUN
+
+-READ UserGroupString &Group.A25.
+
+-SET &GroupString = IF &RowNumber GT 1 THEN '&GroupString.EVAL' | '&Group.EVAL' ELSE '&Group.EVAL';
+-SET &RowNumber = &RowNumber + 1;
+-GroupLoop
+
+-SET &Administrator = IF POSIT('&GroupString.EVAL', &GroupString.LENGTH, 'Administrators', 14, 'I5') GT 0 THEN 'True' ELSE 'False';
+-SET &Super_User = IF POSIT('&GroupString.EVAL', &GroupString.LENGTH, 'Super_User', 10, 'I5') GT 0 THEN 'True' ELSE 'False';
+-SET &Power_User = IF POSIT('&GroupString.EVAL', &GroupString.LENGTH, 'Power_User', 10, 'I5') GT 0 THEN 'True' ELSE 'False';
+-SET &PSA_User = IF POSIT('&GroupString.EVAL', &GroupString.LENGTH, 'PSA_User', 3, 'I5') GT 0 THEN 'True' ELSE 'False';
+
+-SET &fOLDER = IF '&Administrator.EVAL' EQ 'True' OR '&Super_User.EVAL' EQ 'True' OR '&Power_User.EVAL' EQ 'True' THEN 'Sales' ELSE
+-	IF '&PSA_User.EVAL' EQ 'True' THEN 'PSA' ELSE
+-	'MyReports';
+
+-SET &FilePath =
+-	IF '&SubFolder.EVAL' EQ 'Sales' THEN '/WFC/Repository/Dynamics_Reporting/Sales' ELSE
+-	IF '&SubFolder.EVAL' EQ 'PSA' THEN '/WFC/Repository/Dynamics_Reporting/PSA/Extract' ELSE
+-	IF '&SubFolder.EVAL' EQ 'MyReports' THEN '/WFC/Repository/Dynamics_Reporting/' ||  '&MyContentFolder.EVAL' ELSE ' ';
+
+-*-* ==========
+-*-:MoveForward
+-*-* ----------
+
+-* ===========================================================================================================================
+-* 														Extract Data
+-* ---------------------------------------------------------------------------------------------------------------------------
+
+JOIN CLEAR *
+JOIN
+INNER HANDLE IN WF_REPOSOBJ TAG REPOS_T TO OBJ_HANDLE IN WF_NLSOBJ TAG NLS_T AS NLS_J
+END
+JOIN
+INNER NLS_T.OBJ_HANDLE IN WF_REPOSOBJ TO HANDLE IN WF_ITEM TAG ITEM_T AS ITEM_J
+END
+
+DEFINE FILE WF_REPOSOBJ
+
+UserIdLeng/I11 = ARGLEN(128, CREATEDBY, UserIdLeng);
+UserId_Low/A128V = LOCASE(UserIdLeng, CREATEDBY, UserId_Low);
+
+END
+
+TABLE FILE WF_REPOSOBJ
+PRINT
+	REPOS_T.HANDLE
+	OBJNAME AS 'REPORT_NAME'
+	OBJDESC AS 'REPORT_DESC'
+	PRT_PATH
+	SUMMARY
+	CREATEDON
+BY PRT_PATH NOPRINT
+WHERE REPOS_T.CLASSNAME EQ 'WfItem';
+WHERE
+(
+	('&SubFolder.EVAL' EQ 'Sales' AND ITEM_T.DATATYPE EQ 'fex')
+		OR
+	('&SubFolder.EVAL' EQ 'PSA' AND ITEM_T.DATATYPE EQ 'htm')
+		OR
+	('&SubFolder.EVAL' EQ 'MyReports')
+);
+ON TABLE SET ASNAMES ON
+ON TABLE HOLD AS MyReports_Raw
+END
+
+-SET &MyReports = &LINES ;
+-*
+DEFINE FILE MyReports_Raw
+
+Path_Length/I11 = ARGLEN(1040, PRT_PATH, Path_Length);
+Remaining_Path/A1040V = SUBSTR(Path_Length, PRT_PATH, 17, Path_Length, Path_Length - 16, Remaining_Path);
+Remaining_Path_Length/I11 = ARGLEN(1040, Remaining_Path, Remaining_Path_Length);
+Slash_Position/I11 = POSIT(Remaining_Path, Remaining_Path_Length, '/', 1, Slash_Position);
+Main_Folder/A100V = SUBSTR(Remaining_Path_Length, Remaining_Path, 1, Slash_Position - 1, Slash_Position - 1, Main_Folder);
+
+
+Rev_Remaining_Path/A1040V=REVERSE(Remaining_Path_Length,Remaining_Path,Rev_Remaining_Path);
+-*Rev_Remaining_Path_Length/I11 = ARGLEN(1040, Rev_Remaining_Path, Rev_Remaining_Path_Length);
+Rev_Slash_Position/I11 = POSIT(Rev_Remaining_Path, Remaining_Path_Length, '/', 1, Rev_Slash_Position);
+Rev_Final_Folder/A100V = SUBSTR(Remaining_Path_Length, Rev_Remaining_Path, 1, Rev_Slash_Position - 1, Rev_Slash_Position - 1, Rev_Final_Folder);
+Final_Sub_Folder_Length/I11 = ARGLEN(100, Rev_Final_Folder, Final_Sub_Folder_Length);
+Final_Sub_Folder/A100V=REVERSE(Final_Sub_Folder_Length,Rev_Final_Folder,Final_Sub_Folder);
+
+FolderDesc/A100V =
+	IF Final_Sub_Folder EQ 'IT' THEN 'Developer Reports'
+	ELSE IF Final_Sub_Folder EQ 'InfoAssist' THEN 'Super User Reports'
+	ELSE IF Final_Sub_Folder EQ 'InfoMini' THEN 'Power User Reports'
+	ELSE '';
+
+FolderNumber/A100V =
+	IF FolderDesc EQ 'Developer Reports' THEN '1' ELSE
+	IF FolderDesc EQ 'Super User Reports' THEN '2' ELSE
+	IF FolderDesc EQ 'Power User Reports' THEN '3' ELSE '4';
+
+Remaining_Path_2/A1040V = SUBSTR(Remaining_Path_Length, Remaining_Path, Slash_Position + 1, Remaining_Path_Length, Remaining_Path_Length - Slash_Position + 1, Remaining_Path_2);
+Remaining_Path_2_Length/I11 = ARGLEN(1040, Remaining_Path_2, Remaining_Path_2_Length);
+
+Slash_2_Position/I11 = POSIT(Remaining_Path_2, Remaining_Path_2_Length, '/', 1, Slash_2_Position);
+
+Second_Level_Folder/A100V =
+	IF Slash_2_Position EQ 0 THEN Remaining_Path_2
+	ELSE SUBSTR(Remaining_Path_2_Length, Remaining_Path_2, 1, Slash_2_Position - 1, Slash_2_Position - 1, Second_Level_Folder);
+
+Second_Level_Folder_UP/A100V = UPCASE(100, Second_Level_Folder, Second_Level_Folder_UP);
+
+Remaining_Path_3/A1040V = SUBSTR(Remaining_Path_2_Length, Remaining_Path_2, Slash_2_Position + 1, Remaining_Path_2_Length, Remaining_Path_2_Length - Slash_2_Position + 1, Remaining_Path_3);
+Remaining_Path_3_Length/I11 = ARGLEN(1040, Remaining_Path_3, Remaining_Path_3_Length);
+Slash_3_Position/I11 = POSIT(Remaining_Path_3, Remaining_Path_3_Length, '/', 1, Slash_3_Position);
+
+Third_Level_Folder/A100V =
+	IF Slash_3_Position EQ 0 THEN Remaining_Path_3
+	ELSE SUBSTR(Remaining_Path_3_Length, Remaining_Path_3, 1, Slash_3_Position - 1, Slash_3_Position - 1, Third_Level_Folder);
+
+Third_Level_Folder_UP/A100V = UPCASE(100, Third_Level_Folder, Third_Level_Folder_UP);
+
+GroupBy/A100V = IF '&SubFolder.EVAL' EQ 'Sales' THEN FolderNumber ELSE Third_Level_Folder;
+
+GroupByDisplay/A100V =
+	IF '&SubFolder.EVAL' EQ 'Sales' THEN FolderDesc ELSE
+	IF Remaining_Path_3 EQ '&MyContentFolder.EVAL' THEN ' ' ELSE
+	Third_Level_Folder;
+
+END
+-RUN
+
+TABLE FILE MyReports_Raw
+PRINT
+	Remaining_Path_2
+	Remaining_Path_2_Length
+	Slash_Position
+	Slash_2_Position
+	Remaining_Path_3
+	HANDLE
+	REPORT_NAME
+	REPORT_DESC
+	PRT_PATH
+	Remaining_Path
+	Final_Sub_Folder
+	FolderDesc
+	SUMMARY
+	CREATEDON
+	Main_Folder
+	FolderNumber
+	HANDLE
+	GroupBy
+	GroupByDisplay
+WHERE PRT_PATH CONTAINS '&FilePath.EVAL';
+WHERE PRT_PATH OMITS ('WFC/Repository/Dynamics_Reporting/Sales/InfoAssist/Dashboards');
+WHERE PRT_PATH OMITS ('WFC/Repository/Dynamics_Reporting/Sales/IT/Dashboards');
+WHERE HANDLE NE 'd1f4de7e_161f_4f53_b333_725627e25ea7';
+ON TABLE HOLD AS My_Saved_Reports
+END
+
+-IF &MyReports EQ 0 THEN GOTO :NoSavedReports;
+
+TABLE FILE My_Saved_Reports
+SUM
+	COMPUTE REPORT_IMAGE/A450V = '<img id="ReportImage" src="/ibi_apps/WFServlet.ibfs?IBFS1_action=RUNFEX&|IBFS_path=/WFC/Repository/Common_Objects/report_rsm_25.png">';
+	REPORT_DESC/A100V AS 'Report Name'
+	COMPUTE REPORT_DESC_LEN/I11 = ARGLEN(100, REPORT_DESC, REPORT_DESC_LEN); NOPRINT
+	COMPUTE REPORT_DESC_OUT_LEN/I11 = REPORT_DESC_LEN + 2; NOPRINT
+
+	COMPUTE VALID_REPORT_DESC/A100V = STRREP(REPORT_DESC_LEN, REPORT_DESC, 1, '''', 3, '@_#', REPORT_DESC_OUT_LEN, VALID_REPORT_DESC); NOPRINT
+
+	COMPUTE VIEW_BUTTON/A450V = '<input type="button" title="Run ' | REPORT_DESC | '" id="RunButton" class="run_report_big" style="width:65px;height:25px"  onclick="RunReport(''' | VALID_REPORT_DESC | ''', ''' | REPORT_NAME | ''', ''' | PRT_PATH | ''');" value="Run">'; AS ''
+	COMPUTE EDIT_BUTTON/A450V =
+		IF '&SubFolder.EVAL' EQ 'PSA' THEN '' ELSE
+		IF '&Administrator.EVAL' EQ 'True' THEN '<input type="button" title="Edit ' | REPORT_DESC | '" id="EditButton" class="edit_report_big" style="width:65px;height:25px" onclick="EditReport(''' | REPORT_DESC | ''', ''' | REPORT_NAME | ''', ''' | PRT_PATH | ''', ''' | HANDLE | ''');" value="Edit">' ELSE
+		IF '&Super_User.EVAL' EQ 'True' THEN '<input type="button" title="Edit ' | REPORT_DESC | '" id="EditButton" class="edit_report_big" style="width:65px;height:25px" onclick="EditReport(''' | REPORT_DESC | ''', ''' | REPORT_NAME | ''', ''' | PRT_PATH | ''', ''' | HANDLE | ''');" value="Edit">' ELSE
+		'' ; AS ''
+-*	COMPUTE SCHEDULE_BUTTON/A450V = '<input type="button" id="GuideReset" class="dt_saved_reports_schedule" style="top:5px;width:75px;height:25px" onclick="OpenScheduleMode_Advanced(''' | REPORT_DESC | ''', ''' | REPORT_NAME | ''', ''' | PRT_PATH | ''', ''' | REPORT_DESC | ''', ''' | '&UserId.EVAL' | ''');" value="Schedule">'; AS ''
+-*	COMPUTE DELETE_BUTTON/A450V = '<input type="button" id="GuideReset" class="dt_saved_reports_delete" style="top:5px;width:75px;height:25px" onclick="OpenDeleteMode_Advanced(''' | REPORT_DESC | ''', ''' | REPORT_NAME | ''', ''' | PRT_PATH | ''');" value="Delete">'; AS ''
+-*	COMPUTE CODE_BUTTON/A450V = '<input type="button" id="GuideReset" class="dt_saved_reports_view_code" style="top:5px;width:80px;height:25px" onclick="OpenCodeMode_Advanced(''' | REPORT_DESC | ''', ''' | REPORT_NAME | ''', ''' | PRT_PATH | ''');" value="View Code">'; AS ''
+	BY GroupBy NOPRINT
+	BY REPORT_DESC NOPRINT
+-IF '&SubFolder.EVAL' EQ 'PSA' THEN GOTO :SkipSUBHEAD;
+ON GroupBy SUBHEAD
+"<GroupByDisplay"
+-:SkipSUBHEAD
+WHERE
+(
+	('&Administrator.EVAL' EQ 'True')
+		OR
+	('&Super_User.EVAL' EQ 'True' AND FolderNumber NE '1')
+		OR
+	('&Power_User.EVAL' EQ 'True' AND NOT FolderNumber IN ('1', '2'))
+		OR
+	('&PSA_User.EVAL' EQ 'True' AND '&Super_User.EVAL' NE 'True' AND '&Power_User.EVAL' NE 'True')
+);
+
+ON TABLE PCHOLD FORMAT HTML
+ON TABLE NOTOTAL
+ON TABLE SET PAGE-NUM NOLEAD
+ON TABLE SET SQUEEZE ON
+ON TABLE SET EMPTYREPORT ON
+ON TABLE SET HTMLCSS ON
+ON TABLE SET HTMLENCODE OFF
+ON TABLE SET CACHELINES 100
+ON TABLE SET AUTOFIT ON
+ON TABLE SET STYLE *
+INCLUDE = IBFS:/WFC/Repository/Dynamics_Reporting/Matrix_Interface/RSMPlain.sty,$
+TYPE=DATA, COLUMN='EDIT_BUTTON', JUSTIFY=RIGHT, BORDER-BOTTOM=LIGHT, BORDER-BOTTOM-STYLE=RIDGE, BORDER-BOTTOM-COLOR=RGB(225 225 225), $
+TYPE=DATA, COLUMN='VIEW_BUTTON', JUSTIFY=RIGHT, BORDER-BOTTOM=LIGHT, BORDER-BOTTOM-STYLE=RIDGE, BORDER-BOTTOM-COLOR=RGB(225 225 225), $
+TYPE=DATA, COLUMN='SCHEDULE_BUTTON', JUSTIFY=RIGHT, BORDER-BOTTOM=LIGHT, BORDER-BOTTOM-STYLE=RIDGE, BORDER-BOTTOM-COLOR=RGB(225 225 225), WIDTH=1,$
+TYPE=DATA, COLUMN='DELETE_BUTTON', JUSTIFY=RIGHT, BORDER-BOTTOM=LIGHT, BORDER-BOTTOM-STYLE=RIDGE, BORDER-BOTTOM-COLOR=RGB(225 225 225), WIDTH=1,$
+TYPE=DATA, COLUMN='CODE_BUTTON', JUSTIFY=RIGHT, BORDER-BOTTOM=LIGHT, BORDER-BOTTOM-STYLE=RIDGE, BORDER-BOTTOM-COLOR=RGB(225 225 225), WIDTH=1,$
+TYPE=DATA, COLUMN='REPORT_DESC', WRAP=2.0, $
+
+TYPE=TITLE,BACKCOLOR=RGB(255 255 255),COLOR=RGB(255 255 255),STYLE=-UNDERLINE+BOLD,$
+
+TYPE=SUBHEAD, JUSTIFY=CENTER, BACKCOLOR=RGB(255 255 255), COLOR=RGB(237 153 89), SIZE=14, STYLE=NORMAL,
+	BORDER-BOTTOM=LIGHT, BORDER-BOTTOM-STYLE=RIDGE, BORDER-BOTTOM-COLOR=RGB(191 193 196),
+	BORDER-TOP=LIGHT, BORDER-TOP-STYLE=RIDGE, BORDER-TOP-COLOR=RGB(255 255 255),
+	$
+
+ENDSTYLE
+END
+-RUN
+
+-IF &LINES EQ 0 THEN GOTO :NoSavedReports;
+-*
+-:HTMLFormatting
+-HTMLFORM BEGIN
+<script type="text/javascript" src="/ibi_apps/jquery/js/jquery.min.js"></script>
+<link type="text/css" rel="stylesheet" href="/ibi_apps/WFServlet.ibfs?IBFS1_action=RUNFEX&|IBFS_path=/WFC/Repository/Dynamics_Reporting/Matrix_Interface/matrix_interface.css">
+
+<script>
+
+
+$('td').each(function(){
+      $(this).css({'height':'30px', 'vertical-align': 'middle', 'padding-top': '5px', 'padding-bottom':'5px'});
+});
+
+$('tr').last().remove();
+
+$('.main_panel', parent.document).css('height', $('table').first().height() + 10 + 'px' );
+$('.footer_panel', parent.document).css({'bottom': '', 'top': $('.main_panel', parent.document).offset().top + $('.main_panel', parent.document).height() + 'px'});
+
+$('td:has("#ReportImage")').css({"text-align": "right", "width": "5%"}).addClass('report_icon');
+$('.report_icon').next().css({"width": "50%"});
+$('td:has("#RunButton")').css({"text-align": "center", "width": "10%"});
+$('td:has("#EditButton")').css({"text-align": "left"});
+
+function EditReport(Title, Object, Path, Handle)
+{
+	var ibfs = '/ibi_apps/startSessionWithGet.vxl?is508=false&|ibfsObjectHandle=';
+	var HandleId = '/' + Handle;
+	var ibfs_end = '&|type=item&|mode=ppQB&|invocationType=1&|themeName=Silver&|startToolInType=Report&|IABasic=false';
+-*	parent.PopupReport(Title, ibfs + Handle + ibfs_end + "&|IBIMR_Random=" + Math.random());
+	parent.EditReport(Title, ibfs + Handle + ibfs_end + "&|IBIMR_Random=" + Math.random());
+}
+
+function RunReport(Title, Object, Path)
+{
+	var ibfs = '/ibi_apps/WFServlet.ibfs?IBFS1_action=RUNFEX&|IBFS_path=';
+	var ObjectName = '/' + Object;
+	parent.RunReport(Title, ibfs + Path + ObjectName + "&|IBIMR_Random=" + Math.random());
+}
+
+-*function OpenScheduleMode_Advanced(Title, Object, Path, ObjectDesc, User)
+-*{
+-*	var ibfs = '/ibi_apps/WFServlet.ibfs?IBFS1_action=RUNFEX&|IBFS_path=';
+-*	var ObjectName = '/' + Object;
+-*	parent.parent.ScheduleOptions_Advanced(Title, ObjectDesc, User, ibfs + Path + ObjectName + "&|IBIMR_Random=" + Math.random());
+-*}
+-*
+-*function OpenDeleteMode_Advanced(Title, Object, Path)
+-*{
+-*	var ibfs = '/ibi_apps/rs/ibfs';
+-*	var ObjectName = '/' + Object + '?IBIRS_action=delete';
+-*	parent.parent.DeleteAlert(Title, ibfs + Path + ObjectName, 'AdvancedOption');
+-*}
+-*
+-*function OpenCodeMode_Advanced(Title, Object, Path)
+-*{
+-*	var ibfs = '/ibi_apps/rs/ibfs';
+-*	var ObjectName = '/' + Object + '?IBIRS_action=get';
+-*	parent.parent.ViewReportCode(Title, ibfs + Path + ObjectName, 'AdvancedOption');
+-*}
+
+</script>
+
+-HTMLFORM END
+
+-GOTO :EndOfReport;
+
+-* =============
+-:NoSavedReports
+-* -------------
+-HTMLFORM IBFS:/WFC/Repository/Dynamics_Reporting/Matrix_Interface/no_saved_reports.htm
+
+-GOTO :EndOfReport
+
+-* ==========
+-:EndOfReport
+-* ----------

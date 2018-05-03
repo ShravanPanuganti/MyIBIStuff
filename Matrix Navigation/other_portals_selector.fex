@@ -1,0 +1,92 @@
+-* File: IBFS:/QA/WFC/Repository/Dynamics_Reporting/Matrix_Interface/Procedure1.fex Created by WebFOCUS AppStudio
+-SET &ECHO=ALL;
+-DEFAULT &SelectedPortal = 'ClientStrategyDashboard';
+
+-IF &SelectedPortal EQ 'ClientStrategyDashboard' THEN GOTO :ClientStrategyDashboard ELSE
+-	IF &SelectedPortal EQ 'IndustryDashboard' THEN GOTO :IndustryDashboard ELSE
+-	IF &SelectedPortal EQ 'NSOGrowthDashboard' THEN GOTO :NSOGrowthDashboard ELSE
+-	IF &SelectedPortal EQ 'NSOPipelineDashboard' THEN GOTO :NSOPipelineDashboard ELSE
+-	IF &SelectedPortal EQ 'RMPOPDashboard' THEN GOTO :RMPOPDashboard ELSE
+-	IF &SelectedPortal EQ 'USGrowthDashboard' THEN GOTO :USGrowthDashboard ELSE GOTO :EndOfOtherPortals;
+
+-:ClientStrategyDashboard
+-HTMLFORM BEGIN
+<script type="text/javascript" src="/ibi_apps/jquery/js/jquery.min.js"></script>
+<script type='text/javascript'>
+$('document').ready(function()
+{
+ window.open("bip/portal/RelationshipDashboard", "_self");
+ });
+</script>
+-HTMLFORM END
+-GOTO :EndOfOtherPortals
+
+-:IndustryDashboard
+-HTMLFORM BEGIN
+<script type="text/javascript" src="/ibi_apps/jquery/js/jquery.min.js"></script>
+<script type='text/javascript'>
+$('document').ready(function()
+{
+ window.open("bip/portal/IndustryDashboard", "_self");
+ });
+</script>
+-HTMLFORM END
+
+-GOTO :EndOfOtherPortals
+
+-:NSOGrowthDashboard
+-HTMLFORM BEGIN
+<script type="text/javascript" src="/ibi_apps/jquery/js/jquery.min.js"></script>
+<script type='text/javascript'>
+$('document').ready(function()
+{
+ window.open("bip/portal/NSOGrowthDashboard", "_self");
+ });
+</script>
+-HTMLFORM END
+
+-GOTO :EndOfOtherPortals
+
+-:NSOPipelineDashboard
+
+-HTMLFORM BEGIN
+<script type="text/javascript" src="/ibi_apps/jquery/js/jquery.min.js"></script>
+<script type='text/javascript'>
+$('document').ready(function()
+{
+ window.open("bip/portal/NSOPipelineDashboard", "_self");
+ });
+</script>
+-HTMLFORM END
+
+-GOTO :EndOfOtherPortals
+
+-:RMPOPDashboard
+
+-HTMLFORM BEGIN
+<script type="text/javascript" src="/ibi_apps/jquery/js/jquery.min.js"></script>
+<script type='text/javascript'>
+$('document').ready(function()
+{
+ window.open("bip/portal/RMPOPDashboard", "_self");
+ });
+</script>
+-HTMLFORM END
+
+-GOTO :EndOfOtherPortals
+
+-:USGrowthDashboard
+
+-HTMLFORM BEGIN
+<script type="text/javascript" src="/ibi_apps/jquery/js/jquery.min.js"></script>
+<script type='text/javascript'>
+$('document').ready(function()
+{
+ window.open("bip/portal/CRMGrowthDashboard", "_self");
+ });
+</script>
+-HTMLFORM END
+
+-GOTO :EndOfOtherPortals
+
+-:EndOfOtherPortals

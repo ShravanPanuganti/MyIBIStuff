@@ -1,0 +1,175 @@
+-* ==========================================================
+-* 										Modification History
+-* ==========================================================
+
+-* 01/07/2015: Shravan Panuganti - Created
+
+-* ==========================================================
+
+TYPE = REPORT,COLOR=RGB(191 193 196),FONT='CALIBRI',SIZE=8,GRID=OFF, RIGHTGAP=0.05, LEFTGAP=0.05,ORIENTATION=LANDSCAPE,$
+TYPE = PAGENUM, STYLE=ITALIC, SIZE=6, JUSTIFY=RIGHT,$
+TYPE =TABHEADING,STYLE=BOLD+ITALIC,SIZE=14,JUSTIFY=CENTER,$
+TYPE =TABFOOTING,STYLE=BOLD+ITALIC,SIZE=12,JUSTIFY=CENTER,BORDER-TOP=HEAVY, BORDER-TOP-COLOR=RGB(52 55 58),$
+TYPE =HEADING,STYLE=BOLD,SIZE=12,JUSTIFY=CENTER,$
+TYPE =FOOTING,STYLE=BOLD,SIZE=10,JUSTIFY=CENTER,$
+TYPE =TITLE,BACKCOLOR=RGB(102 193 129),COLOR=RGB(255 255 255),STYLE=-UNDERLINE+BOLD, SIZE=10,$
+TYPE =DATA, BACKCOLOR='WHITE', COLOR=RGB(132 144 141), SIZE=12,
+     BORDER-BOTTOM =LIGHT,
+     BORDER-BOTTOM-STYLE=RIDGE,
+     BORDER-BOTTOM-COLOR=RGB(225 225 225),$
+TYPE =ACROSSTITLE, BORDER-TOP=LIGHT, BORDER-BOTTOM=HEAVY, BORDER-TOP-COLOR=RGB(52 55 58), BORDER-BOTTOM-COLOR=RGB(52 55 58), SIZE=9, STYLE=-UNDERLINE+BOLD,$
+TYPE =ACROSSVALUE,BACKCOLOR=RGB(218 225 232),STYLE=BOLD,$
+TYPE =SUBHEAD,SIZE=10,STYLE=BOLD,BORDER-TOP=LIGHT, BORDER-BOTTOM=LIGHT, BORDER-TOP-COLOR=RGB(225 225 225), BORDER-BOTTOM-COLOR=RGB(225 225 225), COLOR=RGB(132 144 141), BACKCOLOR=RGB(235 247 238), $
+TYPE =SUBFOOT,SIZE=10,STYLE=BOLD,BORDER-TOP=LIGHT, BORDER-BOTTOM=MEDIUM, BORDER-TOP-COLOR=RGB(52 55 58), BORDER-BOTTOM-COLOR=RGB(52 55 58),$
+TYPE =SUBTOTAL,BACKCOLOR=RGB(200 200 200),STYLE=BOLD,BORDER-TOP=LIGHT,BORDER-TOP-COLOR=RGB(66 70 73),$
+TYPE =GRANDTOTAL,BACKCOLOR=RGB(66 70 73),COLOR=RGB(255 255 255),STYLE=BOLD,$
+TYPE =REPORT, OBJECT=STATUS-AREA,COLOR=white,BACKCOLOR=rgb(102 102 102),$
+TYPE =REPORT, OBJECT=CURRENT-ROW,BACKCOLOR=RGB(200 200 200),HOVER-BACKCOLOR=rgb(218 225 232),$
+TYPE =REPORT, GRAPHCOLOR=green,GRAPHCOLORNEG=red,$
+TYPE =REPORT, OBJECT=CALC-AREA, COLOR=white,BACKCOLOR=rgb(102 102 102),  $
+TYPE =REPORT, OBJECT=MENU, COLOR=white,BACKCOLOR=rgb(102 102 102), BORDER-COLOR=white,HOVER-COLOR=rgb(66 70 73),hover-backcolor=rgb(218 225 232),$
+TYPE =REPORT,ARICONSET=WHITE,$
+*GRAPH_SCRIPT
+setFillColor(getSeries(0),new  Color(176,199,222)  );
+setFillColor(getSeries(1),new Color(243,213,123));
+setFillColor(getSeries(2),new  Color(148,210,132));
+setFillColor(getSeries(3),new Color(247,170,169));
+
+setFillColor(getSeries(4),new Color(248,170,122));
+setFillColor(getSeries(5),new  Color(40,190,205)  );
+setFillColor(getSeries(6),new  Color(255,102,102)  );
+setFillColor(getSeries(7), new Color(71,186,143));
+setFillColor(getSeries(8), new Color(187,90,71));
+setFillColor(getSeries(9),new  Color(190,107,211));
+setFillColor(getSeries(10),new Color(16,122,22));
+setFillColor(getSeries(11),new Color(108,149,200));
+setFillColor(getSeries(12),new Color(169,109,205)  );
+setFillColor(getSeries(13),new Color(210,143,255)  );
+setFillColor(getSeries(14),new Color(60,49,36));
+setFillColor(getSeries(15),new Color(78,43,37));
+setFillColor(getSeries(16),new Color(95,38,37));
+setFillColor(getSeries(17),new Color(19,23,162));
+setFillColor(getSeries(18),new Color(66,70,73));
+setFillColor(getSeries(19),new Color(19,23,162));
+setFillColor(getSeries(20),new Color(66,70,73));
+setFillColor(getSeries(21),new Color(191,218,170));
+setFillColor(getSeries(22),new Color(0,0,128));
+setFillColor(getSeries(23),new Color(163,211,208));
+setFillColor(getSeries(24),new Color(158,213,243));
+setFillColor(getSeries(25),new Color(179,151,191));
+setFillColor(getSeries(26),new Color(200,158,193));
+setFillColor(getSeries(27),new Color(240,171,196));
+setFillColor(getSeries(28),new Color(242,171,168));
+setFillColor(getSeries(29),new Color(230,121,88));
+setFillColor(getSeries(30),new Color(240,159,97));
+setFillColor(getSeries(31),new Color(248,191,106));
+setFillColor(getSeries(32),new Color(255,239,121));
+setFillColor(getSeries(33),new Color(195,218,125));
+setFillColor(getSeries(34),new Color(0,0,255));
+setFillColor(getSeries(35),new Color(0,255,0));
+setFillColor(getSeries(36),new Color(255,0,255));
+setFillColor(getSeries(37),new Color(255,255,0));
+setFillColor(getSeries(38),new Color(255,0,0));
+setFillColor(getSeries(39),new Color(255,200,0));
+setFillColor(getSeries(40),new Color(255,175,175));
+setFillColor(getSeries(41),new Color(0,255,255));
+setFillColor(getSeries(42),new Color(206,0,54));
+setFillColor(getSeries(43),new Color(255,239,0));
+setFillColor(getSeries(44),new Color(0,152,82));
+setFillColor(getSeries(45),new Color(0,174,227));
+setFillColor(getSeries(46),new Color(42,19,109));
+setFillColor(getSeries(47),new Color(206,0,121));
+setFillColor(getSeries(48),new Color(243,169,136));
+setFillColor(getSeries(49),new Color(248,190,145));
+setFillColor(getSeries(50),new Color(253,211,154));
+setFillColor(getSeries(51),new Color(255,243,172));
+setFillColor(getSeries(52),new Color(217,229,171));
+setFillColor(getSeries(53),new Color(191,218,170));
+setFillColor(getSeries(54),new Color(165,208,169));
+setFillColor(getSeries(55),new Color(163,211,208));
+setFillColor(getSeries(56),new Color(158,213,243));
+setFillColor(getSeries(57),new Color(179,151,191));
+setFillColor(getSeries(58),new Color(200,158,193));
+setFillColor(getSeries(59),new Color(240,171,196));
+setFillColor(getSeries(60),new Color(242,171,168));
+setFillColor(getSeries(61),new Color(230,121,88));
+setFillColor(getSeries(62),new Color(240,159,97));
+setFillColor(getSeries(63),new Color(248,191,106));
+setBorderColor(getO1AxisLine(),new Color(130,130,130));
+setBorderColor(getY1AxisLine(),new Color(130,130,130));
+setFillColor(getY1Title(),new Color(66,70,73));
+setFillColor(getY1Label(),new Color(66,70,73));
+setFillColor(getY2Label(),new Color(66,70,73));
+setFillColor(getY3Label(),new Color(66,70,73));
+setFillColor(getY4Label(),new Color(66,70,73));
+setFillColor(getY5Label(),new Color(66,70,73));
+setFillColor(getO1Title(),new Color(66,70,73));
+setFillColor(getX1Title(),new Color(66,70,73));
+setFillColor(getO1Label(),new Color(66,70,73));
+setFillColor(getO2Label(),new Color(66,70,73));
+setFillColor(getX1Label(),new Color(66,70,73));
+setFillColor(getLegendText(),new Color(66,70,73));
+setFillColor(getFrame(),new Color(235,235,240));
+setFillColor(getChartBackground(),new Color(255,255,255));
+setBorderColor(getY1MajorGrid(),new Color(204,204,204));
+setBorderColor(getY1MinorGrid(),new Color(204,204,204));
+setBorderColor(getY2MajorGrid(),new Color(204,204,204));
+setBorderColor(getY2MinorGrid(),new Color(204,204,204));
+setBorderColor(getO1MajorGrid(),new Color(204,204,204));
+setBorderColor(getO1MinorGrid(),new Color(204,204,204));
+setBorderColor(getX1MajorGrid(),new Color(204,204,204));
+setBorderColor(getX1MinorGrid(),new Color(204,204,204));
+setTransparentBorderColor(getCubeFloor(),true);
+setTransparentBorderColor(getCubeLeftWall(),true);
+setTransparentBorderColor(getCubeRightWall(),true);
+setCubeFocusFactor(95.83333182119424);
+setCubePanX(41.3);
+setCubePanY(54.7);
+setCubeRotationMatrix(0.9527877123115605,-0.39648905742363183,1.0691265903653806,-0.012240167246073914,1.389589570659449,0.5262420232508634,-1.1402128823990627,-0.3462324595884829,0.8877371966710723);
+setCubeViewerZ(93.61645050038162);
+setCubeZoomFactor(55.0);
+setCubeWallThickZ(0.0);
+setCubeWallThickY(0.0);
+setCubeWallThickX(0.0);
+setTransparentBorderColor(getSeries(0),true);
+setTransparentBorderColor(getSeries(1),true);
+setTransparentBorderColor(getSeries(2),true);
+setTransparentBorderColor(getSeries(3),true);
+setTransparentBorderColor(getSeries(4),true);
+setTransparentBorderColor(getSeries(5),true);
+setTransparentBorderColor(getSeries(6),true);
+setTransparentBorderColor(getSeries(7),true);
+setTransparentBorderColor(getSeries(8),true);
+setTransparentBorderColor(getSeries(9),true);
+setTransparentBorderColor(getSeries(10),true);
+setTransparentBorderColor(getSeries(11),true);
+setTransparentBorderColor(getSeries(12),true);
+setTransparentBorderColor(getSeries(13),true);
+setTransparentBorderColor(getSeries(14),true);
+setTransparentBorderColor(getSeries(15),true);
+setTransparentBorderColor(getSeries(16),true);
+setTransparentBorderColor(getSeries(17),true);
+setTransparentBorderColor(getChartBackground(),true);
+
+setY1MajorGridStyle(0);
+setY2MajorGridStyle(0);
+setO1MajorGridStyle(0);
+setX1MajorGridStyle(0);
+setLineStyleLegendMarkers(3);
+setNullLegendMarkerShapesAsSquares(false);
+setFrameAutoShade(true);
+setColorMode(1);
+setUseDefaultBubbleMarker(false);
+
+*GRAPH_JS
+"mouseOverIndicator": {
+         "enabled": true,
+         "color": "grey",
+	"marker":{"size": 0}
+},
+"introAnimation": {
+   "enabled": true,
+   "duration": 1400
+  },
+"riserShadow": true
+*END
